@@ -30,6 +30,7 @@ public class TranslateXML {
 	private final static String SONGTITLE_NAME = "SongTitle";
 	private final static String TRACKNUMBER_NAME = "TrackNumber";
 	private final static String YEAR_NAME = "Year";
+	//name of the attribute file:
 	private final static String FILE_NAME = "File";
 	
 	private DocumentBuilder documentBuilder;
@@ -52,6 +53,7 @@ public class TranslateXML {
 	public void addMP3(AbstractMP3Tag brano, String file){
 		//create the new song node
 		Element song = document.createElement(SONG_NAME);
+		song.setAttribute(FILE_NAME, file);
 		//fill the new node with data.
 		Element albumTitle = document.createElement(ALBUMTITLE_NAME);
 		albumTitle.appendChild(document.createTextNode(brano.getAlbumTitle()));
@@ -80,11 +82,6 @@ public class TranslateXML {
 		Element year = document.createElement(YEAR_NAME);
 		year.appendChild(document.createTextNode(brano.getYearReleased()));
 		song.appendChild(year);
-		
-		//filename node
-		Element fileNode = document.createElement(FILE_NAME);
-		fileNode.appendChild(document.createTextNode(file));
-		song.appendChild(fileNode);
 		
 		//add the new node to the tree
 		root.appendChild(song);
