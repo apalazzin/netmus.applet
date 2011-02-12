@@ -7,7 +7,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
@@ -42,13 +41,13 @@ public class TranslateXML {
 		//this operation can throw an instance of ParserConfigurationException: in fact, it will never been thrown in our program.
 		documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 		newMP3List();
-	};
+	}
 	
 	public void newMP3List(){
 		document = documentBuilder.newDocument();
 		root = document.createElement(ROOT_NAME);
 		document.appendChild(root);
-	};
+	}
 	
 	public void addMP3(AbstractMP3Tag brano, String file){
 		//create the new song node
@@ -85,7 +84,7 @@ public class TranslateXML {
 		
 		//add the new node to the tree
 		root.appendChild(song);
-	};
+	}
 	
 	public String toString(){
 		Source source = new DOMSource(document);
@@ -100,5 +99,5 @@ public class TranslateXML {
 			e.printStackTrace();
 		}
 		return null;
-	};
+	}
 }
