@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,14 +18,13 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.farng.mp3.AbstractMP3Tag;
 import org.farng.mp3.MP3File;
-import org.farng.mp3.TagException;
 
 public class DeviceScanner extends Thread {
    
-   private final File linux_path = new File("/media");
-   private final File mac_path = new File("/Volumes");
+   private final String linux_path = "/media";
+   private final String mac_path = "/Volumes";
    private final FileSystemView fs = FileSystemView.getFileSystemView();
-   private File default_path = null;
+   private String default_path = "";
    private List<File> devices = null;
    private int num_devices = 0;
    
@@ -37,34 +35,39 @@ public class DeviceScanner extends Thread {
       
       this.user = user;
       
-      if(linux_path.exists()) {
-         devices = Arrays.asList(fs.getFiles(linux_path, false));
+      if (new File(linux_path).exists()) {
+         devices = Arrays.asList(fs.getFiles(new File(linux_path), false));
          default_path = linux_path;
       }
-      if(mac_path.exists()) {
-         devices = Arrays.asList(fs.getFiles(mac_path, false));
+      if (new File(mac_path).exists()) {
+         devices = Arrays.asList(fs.getFiles(new File(mac_path), false));
          default_path = mac_path;
       }
       if (File.listRoots().length > 1) { // WINDOWS
          devices = Arrays.asList(File.listRoots());
-         default_path = null;
+         default_path = "";
       }
       num_devices = devices.size();
    }
    
+   private String relativePath(String path, String device_path) {
+      path = path.replace(device_path, "");
+      return path;
+   }
    
-   private void scanMedia(File folder, PrintWriter file, TranslateXML xml, List<String> old_mp3) {
+   
+   private void scanMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path) {
       
       File[] files = fs.getFiles(folder, false);
       FileNameExtensionFilter audioFilter = new FileNameExtensionFilter("Audio", "mp3");
 
       for (File f: files) {
          if (f.isDirectory())
-            scanMedia(f,file,xml,old_mp3);
-         else if (audioFilter.accept(f) && !old_mp3.contains(f.getName())) {
-            xml.addMP3(getTag(f), f.getName()); // da cambiare con path rel
-            System.out.println(f.getName());
-            file.println(f.getName());
+            scanMedia(f,log,xml,old_mp3,dev_path);
+         else if (audioFilter.accept(f) && !old_mp3.contains(relativePath(f.getAbsolutePath(), dev_path))) {
+            //xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path)); // da cambiare con path rel
+            System.out.println(relativePath(f.getAbsolutePath(), dev_path));
+            log.println(relativePath(f.getAbsolutePath(), dev_path));
          }
       }
    }
@@ -85,9 +88,7 @@ public class DeviceScanner extends Thread {
 
             in.close();
             
-         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-         } catch (IOException e) {
+         } catch (Exception e) {
             e.printStackTrace();
          }
       }
@@ -99,25 +100,21 @@ public class DeviceScanner extends Thread {
       MP3File mp3 = null;
       try {
          mp3 = new MP3File(mp3_file); // puo' dar problemi con MP3 difettosi.
-      } catch (IOException e) { // bisogna gestire una possibile IO Exception in maniera da riprendere
+      } catch (Exception e) { // bisogna gestire una possibile IO Exception in maniera da riprendere
          e.printStackTrace();    // normalmente le attivita' chiudendo reader e  writer vari
-      } catch (TagException e) {
-         e.printStackTrace();
       }
       
       AbstractMP3Tag tag = null;
       if (mp3.hasID3v2Tag()) {
-         System.out.println("- id3v2");
          tag = mp3.getID3v2Tag();
       }
-      else if (mp3.hasID3v1Tag()) {
-         System.out.println("- id3v1");
+      else if (mp3.hasID3v1Tag()) {        // FORSE NON SERVE
          tag = mp3.getID3v1Tag();
       }
-      else if (mp3.hasLyrics3Tag()) {
-         System.out.println("- lyrycs");
+      else if (mp3.hasLyrics3Tag()) {      // FORSE NON SERVE
          tag = mp3.getLyrics3Tag();
       }
+      else System.out.println(mp3_file.getAbsolutePath()+" has no tag.");
       
       return tag;
    }
@@ -141,12 +138,12 @@ public class DeviceScanner extends Thread {
          List<File> devices_temp = null;
          int num_devices_temp = 0;
          
-         if (default_path == null) { // WINDOWS
+         if (default_path == "") { // WINDOWS
             devices_temp = Arrays.asList(File.listRoots());
             num_devices_temp = devices_temp.size();
          }
          else { // LINUX o MAC
-            devices_temp = Arrays.asList(fs.getFiles(default_path, false));
+            devices_temp = Arrays.asList(fs.getFiles(new File(default_path), false));
             num_devices_temp = devices_temp.size();
          }
          
@@ -174,7 +171,11 @@ public class DeviceScanner extends Thread {
             
             for(File new_device : new_devices) {
                try {
-                  String log_path = new_device.getAbsolutePath()+"/"+ user +".netmus.log";
+                  String slash = "";
+                  if (default_path != "") slash = "/";
+                  String log_path = new_device.getAbsolutePath() + slash + user +".netmus.log";
+                  
+                  System.out.println(log_path);  // RIMUOVERE
                   
                   File log = new File(log_path);
                   List<String> old_mp3 = readLog(log);
@@ -189,10 +190,19 @@ public class DeviceScanner extends Thread {
                      e.printStackTrace();
                   }
                   
-                  scanMedia(new_device,file,xml,old_mp3); // scansione new_device
+                  // path da togliere nel log e nel xml dal nome del file. in modo che sia un path relativo.
+                  String device_path = new_device.getAbsolutePath() + slash;
                   
-                  String xml_string = xml.toString(); // da inviare al server
+                  scanMedia(new_device,file,xml,old_mp3,device_path); // scansione new_device
                   file.close();
+                  
+                  // String xml_string = xml.toString(); // da inviare a GWT -> DTO -> server
+                  
+                  //stampo l'output sul file
+//                  BufferedWriter t = new BufferedWriter(new FileWriter(new File(new_device.getAbsolutePath()+"result.log"),true));
+//                  t.write(xml_string);
+//                  t.close();
+
                } catch (IOException io) {}
             }
 
@@ -206,12 +216,12 @@ public class DeviceScanner extends Thread {
             
             System.out.println("Rimosso device"); //togliere
             
-            if (default_path == null) { // WINDOWS
+            if (default_path == "") { // WINDOWS
                devices = Arrays.asList(File.listRoots());
                num_devices = devices.size();
             }
             else { // LINUX o MAC
-               devices = Arrays.asList(fs.getFiles(default_path, false));
+               devices = Arrays.asList(fs.getFiles(new File(default_path), false));
                num_devices = devices.size();
             }
          }
@@ -225,7 +235,7 @@ public class DeviceScanner extends Thread {
       }//while(true)
    }//run()
    
-   synchronized void setState(boolean b) { // visibilita'  package
+   synchronized void setState(boolean b) { // visibilita' package
       isActive = b;
    }
 }
