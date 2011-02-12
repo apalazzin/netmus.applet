@@ -17,15 +17,18 @@ public class NetmusApplet extends JApplet {
    private static DeviceScanner scanner;
    
    
-   private String s = "";// da togliere
-   private JTextField l = new JTextField(20);// da togliere
-   private JButton button = new JButton("Disattiva");// da togliere
+   String s = "";// da togliere
+   JTextField l;
+   JButton button;
    
+   // rimuovere -> non ci sara' gui
    @Override
-   public void start() {
+   public void init() {
+      l = new JTextField(20);// da togliere
+      button = new JButton("Disattiva");// da togliere
       
-      setLayout(new FlowLayout(FlowLayout.CENTER));// da togliere dopo
-      add(l); // da togliere dopo
+      getContentPane().setLayout(new FlowLayout(FlowLayout.CENTER));// da togliere dopo
+      getContentPane().add(l); // da togliere dopo
       
       // bottone per simulare on/off da GWT
       button.addActionListener(new ActionListener() {// da togliere dopo
@@ -42,18 +45,20 @@ public class NetmusApplet extends JApplet {
             repaint();
          }
       });
-      add(button);// da togliere dopo
+      getContentPane().add(button);// da togliere dopo
+   }
+   
+   @Override
+   public void start() {
       
 //      CON QUESTA RICHIESTA VOGLIO ANCHE IL NOME UTENTE, NON SOLO LO STATO
-      isActive = true;
-      loggedUser = "smile";
-      
+      isActive = true; // togliere
+      loggedUser = "smile"; // togliere
 //      try {
 //         getAppletContext().showDocument(new URL("javascript:getState()"));
 //      } catch (Exception e) {
 //         e.printStackTrace();
 //      }
-      
       
       scanner = new DeviceScanner(loggedUser);
       setState(isActive);
