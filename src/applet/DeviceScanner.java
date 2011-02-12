@@ -5,7 +5,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,10 +12,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.farng.mp3.AbstractMP3Tag;
 import org.farng.mp3.MP3File;
@@ -63,7 +62,7 @@ public class DeviceScanner extends Thread {
          if (f.isDirectory())
             scanMedia(f,file,xml,old_mp3);
          else if (audioFilter.accept(f) && !old_mp3.contains(f.getName())) {
-            xml.addMP3(getTag(f));
+            xml.addMP3(getTag(f), f.getName()); // da cambiare con path rel
             System.out.println(f.getName());
             file.println(f.getName());
          }
@@ -182,11 +181,17 @@ public class DeviceScanner extends Thread {
                   
                   FileWriter open_log = new FileWriter(log_path, true);
                   PrintWriter file = new PrintWriter(open_log);
-                  TranslateXML xml = new TranslateXML();
+                  
+                  TranslateXML xml = null;
+                  try {
+                     xml = new TranslateXML();
+                  } catch (ParserConfigurationException e) {
+                     e.printStackTrace();
+                  }
                   
                   scanMedia(new_device,file,xml,old_mp3); // scansione new_device
                   
-                  String xml_string = xml.toString();
+                  String xml_string = xml.toString(); // da inviare al server
                   file.close();
                } catch (IOException io) {}
             }
