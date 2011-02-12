@@ -5,8 +5,10 @@ import java.io.StringWriter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
@@ -53,35 +55,97 @@ public class TranslateXML {
 		//create the new song node
 		Element song = document.createElement(SONG_NAME);
 		song.setAttribute(FILE_NAME, file);
-		//fill the new node with data.
-		Element albumTitle = document.createElement(ALBUMTITLE_NAME);
-		albumTitle.appendChild(document.createTextNode(brano.getAlbumTitle()));
-		song.appendChild(albumTitle);
 		
-		Element authorComposer = document.createElement(AUTHORCOMPOSER_NAME);
-		authorComposer.appendChild(document.createTextNode(brano.getAuthorComposer()));
-		song.appendChild(authorComposer);
-		
-		Element leadArtist = document.createElement(LEADARTIST_NAME);
-		leadArtist.appendChild(document.createTextNode(brano.getLeadArtist()));
-		song.appendChild(leadArtist);
-		
-		Element songGenre = document.createElement(SONGGENRE_NAME);
-		songGenre.appendChild(document.createTextNode(brano.getSongGenre()));
-		song.appendChild(songGenre);
-		
-		Element songTitle = document.createElement(SONGTITLE_NAME);
-		songTitle.appendChild(document.createTextNode(brano.getSongTitle()));
-		song.appendChild(songTitle);
-		
-		Element trackNumber = document.createElement(TRACKNUMBER_NAME);
-		trackNumber.appendChild(document.createTextNode(brano.getTrackNumberOnAlbum()));
-		song.appendChild(trackNumber);
-		
-		Element year = document.createElement(YEAR_NAME);
-		year.appendChild(document.createTextNode(brano.getYearReleased()));
-		song.appendChild(year);
-		
+		if (brano != null)
+		{
+			String temp = null;
+			
+			try {
+				temp = brano.getAlbumTitle();
+				if (temp != null && !temp.isEmpty())
+				{
+					//fill the new node with data.
+					Element albumTitle = document.createElement(ALBUMTITLE_NAME);
+					albumTitle.appendChild(document.createTextNode(temp));
+					song.appendChild(albumTitle);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+			
+			try {
+				temp = brano.getAuthorComposer();
+				if (temp != null && !temp.isEmpty())
+				{
+					Element authorComposer = document.createElement(AUTHORCOMPOSER_NAME);
+					authorComposer.appendChild(document.createTextNode(temp));
+					song.appendChild(authorComposer);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+			
+			try {
+				temp = brano.getLeadArtist();
+				if (temp != null && !temp.isEmpty())
+				{
+					Element leadArtist = document.createElement(LEADARTIST_NAME);
+					leadArtist.appendChild(document.createTextNode(temp));
+					song.appendChild(leadArtist);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+			
+			try {
+				temp = brano.getSongGenre();
+				if (temp != null && !temp.isEmpty())
+				{
+					Element songGenre = document.createElement(SONGGENRE_NAME);
+					songGenre.appendChild(document.createTextNode(temp));
+					song.appendChild(songGenre);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+			
+			try {
+				temp = brano.getSongTitle();
+				if (temp != null && !temp.isEmpty())
+				{
+					Element songTitle = document.createElement(SONGTITLE_NAME);
+					songTitle.appendChild(document.createTextNode(temp));
+					song.appendChild(songTitle);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+			
+			try {
+				temp = brano.getTrackNumberOnAlbum();
+				if (temp != null && !temp.isEmpty())
+				{
+					Element trackNumber = document.createElement(TRACKNUMBER_NAME);
+					trackNumber.appendChild(document.createTextNode(temp));
+					song.appendChild(trackNumber);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+			
+			try {
+				temp = brano.getYearReleased();
+				if (temp != null && !temp.isEmpty())
+				{
+					Element year = document.createElement(YEAR_NAME);
+					year.appendChild(document.createTextNode(temp));
+					song.appendChild(year);
+				}
+			} catch (UnsupportedOperationException e){
+				System.err.println("Operazione non supportata.");
+			}
+		}
+			
 		//add the new node to the tree
 		root.appendChild(song);
 	}
@@ -91,7 +155,9 @@ public class TranslateXML {
         StringWriter stringWriter = new StringWriter();
         Result result = new StreamResult(stringWriter);
         try {
-			TransformerFactory.newInstance().newTransformer().transform(source, result);
+			Transformer t=TransformerFactory.newInstance().newTransformer();
+			t.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
+			t.transform(source, result);
 			return stringWriter.getBuffer().toString();
 		} catch (TransformerException e) {
 			e.printStackTrace();
