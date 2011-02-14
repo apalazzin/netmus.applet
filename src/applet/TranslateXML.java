@@ -51,6 +51,17 @@ public class TranslateXML {
 		document.appendChild(root);
 	}
 	
+	private String clean(String stringa)
+	{
+		System.out.print(stringa);
+		String t = stringa.replaceAll("\t\b\n\r\f\0", "");
+		t = t.replaceAll("&[\\S^;]{1,6};","");
+		System.out.println(" - "+t);
+		
+		
+		return t;
+	}
+	
 	public void addMP3(AbstractMP3Tag brano, String file){
 		//create the new song node
 		Element song = document.createElement(SONG_NAME);
@@ -156,9 +167,10 @@ public class TranslateXML {
         Result result = new StreamResult(stringWriter);
         try {
 			Transformer t=TransformerFactory.newInstance().newTransformer();
-			//t.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
+			t.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-15");
+			//t.setOutputProperty(OutputKeys.ENCODING,"UTF16");
 			t.transform(source, result);
-			return stringWriter.getBuffer().toString();
+			return clean(stringWriter.getBuffer().toString());
 		} catch (TransformerException e) {
 			e.printStackTrace();
 		} catch (TransformerFactoryConfigurationError e) {
