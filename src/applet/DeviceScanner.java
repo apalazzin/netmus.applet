@@ -65,7 +65,7 @@ public class DeviceScanner extends Thread {
          if (f.isDirectory())
             scanMedia(f,log,xml,old_mp3,dev_path);
          else if (audioFilter.accept(f) && !old_mp3.contains(relativePath(f.getAbsolutePath(), dev_path))) {
-            //xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path)); // da cambiare con path rel
+            xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path)); // da cambiare con path rel
             System.out.println(relativePath(f.getAbsolutePath(), dev_path));
             log.println(relativePath(f.getAbsolutePath(), dev_path));
          }
@@ -98,23 +98,22 @@ public class DeviceScanner extends Thread {
    
    private AbstractMP3Tag getTag(File mp3_file) {
       MP3File mp3 = null;
+      AbstractMP3Tag tag = null;
       try {
          mp3 = new MP3File(mp3_file); // puo' dar problemi con MP3 difettosi.
+         if (mp3.hasID3v2Tag()) {
+             tag = mp3.getID3v2Tag();
+          }
+          else if (mp3.hasID3v1Tag()) {        // FORSE NON SERVE
+             tag = mp3.getID3v1Tag();
+          }
+          else if (mp3.hasLyrics3Tag()) {      // FORSE NON SERVE
+             tag = mp3.getLyrics3Tag();
+          }
+          else System.out.println(mp3_file.getAbsolutePath()+" has no tag.");
       } catch (Exception e) { // bisogna gestire una possibile IO Exception in maniera da riprendere
          e.printStackTrace();    // normalmente le attivita' chiudendo reader e  writer vari
       }
-      
-      AbstractMP3Tag tag = null;
-      if (mp3.hasID3v2Tag()) {
-         tag = mp3.getID3v2Tag();
-      }
-      else if (mp3.hasID3v1Tag()) {        // FORSE NON SERVE
-         tag = mp3.getID3v1Tag();
-      }
-      else if (mp3.hasLyrics3Tag()) {      // FORSE NON SERVE
-         tag = mp3.getLyrics3Tag();
-      }
-      else System.out.println(mp3_file.getAbsolutePath()+" has no tag.");
       
       return tag;
    }
@@ -164,6 +163,10 @@ public class DeviceScanner extends Thread {
                   new_devices.add(f);
                }
             }
+            System.out.println("Aggiungo l'hard disk");
+            
+            //new_devices.add(new File("/media/AE68D50368D4CAEB")); test linux
+            new_devices.add(new File("C:\\"));
             
             // aggiorno la vecchia lista device con quella nuova
             num_devices = num_devices_temp;
@@ -196,12 +199,14 @@ public class DeviceScanner extends Thread {
                   scanMedia(new_device,file,xml,old_mp3,device_path); // scansione new_device
                   file.close();
                   
-                  // String xml_string = xml.toString(); // da inviare a GWT -> DTO -> server
+                  String xml_string = xml.toString(); // da inviare a GWT -> DTO -> server
+                  
+                  System.out.println (xml_string);
                   
                   //stampo l'output sul file
-//                  BufferedWriter t = new BufferedWriter(new FileWriter(new File(new_device.getAbsolutePath()+"result.log"),true));
-//                  t.write(xml_string);
-//                  t.close();
+                  java.io.BufferedWriter t = new java.io.BufferedWriter(new FileWriter(new File(new_device.getAbsolutePath()+slash+"result.log"),true));
+                  t.write(xml_string);
+                  t.close();
 
                } catch (IOException io) {}
             }
