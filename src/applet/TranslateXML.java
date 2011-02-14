@@ -156,7 +156,7 @@ public class TranslateXML {
         Result result = new StreamResult(stringWriter);
         try {
 			Transformer t=TransformerFactory.newInstance().newTransformer();
-			t.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
+			//t.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
 			t.transform(source, result);
 			return stringWriter.getBuffer().toString();
 		} catch (TransformerException e) {
