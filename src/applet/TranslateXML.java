@@ -181,12 +181,12 @@ public class TranslateXML {
 	
 	public String getGenreCode(String StringCode){
 		System.out.println(StringCode);
-		if(StringCode.matches("[a-z[A-Z]]")) return StringCode;//the genre is already specified in a non-code format in the mp3 tag
+		if(StringCode.matches("^[\\D]+$")) return StringCode;//the genre is already specified in a non-code format in the mp3 tag
 		else{
 			//let's transform the code in its correspondent genre name
 			   StringCode=StringCode.replaceAll("\\D", "");
 			   if(StringCode.isEmpty()) return "Unknown";//there wasn't a code or a name of the genre in the mp3 tag
-			   System.out.println(StringCode);
+			   System.out.println("Result code: "+StringCode);
 				   int intCode = Integer.parseInt(StringCode);
 				   String genre="";
 				   switch(intCode){
