@@ -32,29 +32,36 @@ public class DeviceScanner extends Thread {
    private String user;
    
    DeviceScanner(String user) {
+	   
+	   System.out.println(System.getProperty("os.name"));
       
       this.user = user;
       
-      if (new File(linux_path).exists()) {
+      if (System.getProperty("os.name").contains("Linux")) { //Linux
          devices = Arrays.asList(fs.getFiles(new File(linux_path), false));
          default_path = linux_path;
       }
-      if (new File(mac_path).exists()) {
+      else if (System.getProperty("os.name").contains("Mac")){	//new File(mac_path).exists()) {	
          devices = Arrays.asList(fs.getFiles(new File(mac_path), false));
          default_path = mac_path;
       }
-      if (File.listRoots().length > 1) { // WINDOWS
+      else if (System.getProperty("os.name").contains("Windows")) { // WINDOWS File.listRoots().length > 1
          devices = Arrays.asList(File.listRoots());
          default_path = "";
       }
       num_devices = devices.size();
    }
    
+   //gets the relative path.
    private String relativePath(String path, String device_path) {
       path = path.replace(device_path, "");
       return path;
    }
    
+   //format the path following the Unix model
+   private String pathUnix(String path){
+	   return path.replaceAll("\\\\","/");
+   }
    
    private void scanMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path) {
       
@@ -64,10 +71,10 @@ public class DeviceScanner extends Thread {
       for (File f: files) {
          if (f.isDirectory())
             scanMedia(f,log,xml,old_mp3,dev_path);
-         else if (audioFilter.accept(f) && !old_mp3.contains(relativePath(f.getAbsolutePath(), dev_path))) {
-            xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path)); // da cambiare con path rel
+         else if (audioFilter.accept(f) && !old_mp3.contains(pathUnix(relativePath(f.getAbsolutePath(), dev_path)))) {
+            xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path));
             System.out.println(relativePath(f.getAbsolutePath(), dev_path));
-            log.println(relativePath(f.getAbsolutePath(), dev_path));
+            log.println(pathUnix(relativePath(f.getAbsolutePath(), dev_path)));
          }
       }
    }
@@ -104,13 +111,13 @@ public class DeviceScanner extends Thread {
          if (mp3.hasID3v2Tag()) {
              tag = mp3.getID3v2Tag();
           }
-          else if (mp3.hasID3v1Tag()) {        // FORSE NON SERVE
+          else if (mp3.hasID3v1Tag()) {        
              tag = mp3.getID3v1Tag();
           }
-          else if (mp3.hasLyrics3Tag()) {      // FORSE NON SERVE
+          else if (mp3.hasLyrics3Tag()) {     
              tag = mp3.getLyrics3Tag();
           }
-          else System.out.println(mp3_file.getAbsolutePath()+" has no tag.");
+          //else System.out.println(mp3_file.getAbsolutePath()+" has no tag.");
       } catch (Exception e) { // bisogna gestire una possibile IO Exception in maniera da riprendere
          e.printStackTrace();    // normalmente le attivita' chiudendo reader e  writer vari
       }
@@ -163,10 +170,11 @@ public class DeviceScanner extends Thread {
                   new_devices.add(f);
                }
             }
-            System.out.println("Aggiungo l'hard disk");
             
-            //new_devices.add(new File("/media/AE68D50368D4CAEB")); test linux
-            new_devices.add(new File("C:\\"));
+            //System.out.println("Aggiungo l'hard disk");
+            
+            //new_devices.add(new File("/media/AE68D50368D4CAEB")); //test linux
+            //new_devices.add(new File("C:\\"));
             
             // aggiorno la vecchia lista device con quella nuova
             num_devices = num_devices_temp;
@@ -174,8 +182,8 @@ public class DeviceScanner extends Thread {
             
             for(File new_device : new_devices) {
                try {
-                  String slash = "";
-                  if (default_path != "") slash = "/";
+                  String slash = System.getProperty("file.separator");
+                  //if (default_path != "") slash = "/";
                   String log_path = new_device.getAbsolutePath() + slash + user +".netmus.log";
                   
                   System.out.println(log_path);  // RIMUOVERE
@@ -195,6 +203,7 @@ public class DeviceScanner extends Thread {
                   
                   // path da togliere nel log e nel xml dal nome del file. in modo che sia un path relativo.
                   String device_path = new_device.getAbsolutePath() + slash;
+                  System.out.println(new_device.getAbsolutePath());
                   
                   scanMedia(new_device,file,xml,old_mp3,device_path); // scansione new_device
                   file.close();
