@@ -55,17 +55,20 @@ public class TranslateXML {
 	{
 		System.out.print(stringa);
 		String t = stringa.replaceAll("\t\b\n\r\f\0", "");
+		t = t.replaceAll("\\]\\]>&[\\S^;]{1,6};<!\\[CDATA\\[", "");
 		t = t.replaceAll("&[\\S^;]{1,6};","");
 		System.out.println(" - "+t);
 		
-		
 		return t;
+		//return stringa;
 	}
 	
 	public void addMP3(AbstractMP3Tag brano, String file){
 		//create the new song node
 		Element song = document.createElement(SONG_NAME);
-		song.setAttribute(FILE_NAME, file);
+		Element fileName = document.createElement(FILE_NAME);
+		fileName.appendChild(document.createCDATASection(file));
+		song.appendChild(fileName);
 		
 		if (brano != null)
 		{
@@ -77,7 +80,7 @@ public class TranslateXML {
 				{
 					//fill the new node with data.
 					Element albumTitle = document.createElement(ALBUMTITLE_NAME);
-					albumTitle.appendChild(document.createTextNode(temp));
+					albumTitle.appendChild(document.createCDATASection(temp));
 					song.appendChild(albumTitle);
 				}
 			} catch (UnsupportedOperationException e){
@@ -89,7 +92,7 @@ public class TranslateXML {
 				if (temp != null && !temp.isEmpty())
 				{
 					Element authorComposer = document.createElement(AUTHORCOMPOSER_NAME);
-					authorComposer.appendChild(document.createTextNode(temp));
+					authorComposer.appendChild(document.createCDATASection(temp));
 					song.appendChild(authorComposer);
 				}
 			} catch (UnsupportedOperationException e){
@@ -101,7 +104,7 @@ public class TranslateXML {
 				if (temp != null && !temp.isEmpty())
 				{
 					Element leadArtist = document.createElement(LEADARTIST_NAME);
-					leadArtist.appendChild(document.createTextNode(temp));
+					leadArtist.appendChild(document.createCDATASection(temp));
 					song.appendChild(leadArtist);
 				}
 			} catch (UnsupportedOperationException e){
@@ -113,7 +116,7 @@ public class TranslateXML {
 				if (temp != null && !temp.isEmpty())
 				{
 					Element songGenre = document.createElement(SONGGENRE_NAME);
-					songGenre.appendChild(document.createTextNode(temp));
+					songGenre.appendChild(document.createCDATASection(temp));
 					song.appendChild(songGenre);
 				}
 			} catch (UnsupportedOperationException e){
@@ -125,7 +128,7 @@ public class TranslateXML {
 				if (temp != null && !temp.isEmpty())
 				{
 					Element songTitle = document.createElement(SONGTITLE_NAME);
-					songTitle.appendChild(document.createTextNode(temp));
+					songTitle.appendChild(document.createCDATASection(temp));
 					song.appendChild(songTitle);
 				}
 			} catch (UnsupportedOperationException e){
@@ -137,7 +140,7 @@ public class TranslateXML {
 				if (temp != null && !temp.isEmpty())
 				{
 					Element trackNumber = document.createElement(TRACKNUMBER_NAME);
-					trackNumber.appendChild(document.createTextNode(temp));
+					trackNumber.appendChild(document.createCDATASection(temp));
 					song.appendChild(trackNumber);
 				}
 			} catch (UnsupportedOperationException e){
@@ -149,7 +152,7 @@ public class TranslateXML {
 				if (temp != null && !temp.isEmpty())
 				{
 					Element year = document.createElement(YEAR_NAME);
-					year.appendChild(document.createTextNode(temp));
+					year.appendChild(document.createCDATASection(temp));
 					song.appendChild(year);
 				}
 			} catch (UnsupportedOperationException e){
