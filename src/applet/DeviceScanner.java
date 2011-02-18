@@ -33,11 +33,11 @@ public class DeviceScanner extends Thread {
    
    DeviceScanner(String user) {
 	   
-	   System.out.println(System.getProperty("os.name"));
+	  System.out.println(System.getProperty("os.name"));
       
       this.user = user;
       
-      if (System.getProperty("os.name").contains("Linux")) { //Linux
+      if (System.getProperty("os.name").contains("Linux")) { // Linux
          devices = Arrays.asList(fs.getFiles(new File(linux_path), false));
          default_path = linux_path;
       }
@@ -48,6 +48,9 @@ public class DeviceScanner extends Thread {
       else if (System.getProperty("os.name").contains("Windows")) { // WINDOWS File.listRoots().length > 1
          devices = Arrays.asList(File.listRoots());
          default_path = "";
+      }
+      else {
+         devices = new ArrayList<File>();
       }
       num_devices = devices.size();
    }
@@ -99,7 +102,6 @@ public class DeviceScanner extends Thread {
             e.printStackTrace();
          }
       }
-      
       return old_mp3;
    }
    
@@ -144,7 +146,7 @@ public class DeviceScanner extends Thread {
          List<File> devices_temp = null;
          int num_devices_temp = 0;
          
-         if (default_path == "") { // WINDOWS
+         if (default_path.equals("")) { // WINDOWS
             devices_temp = Arrays.asList(File.listRoots());
             num_devices_temp = devices_temp.size();
          }
@@ -201,6 +203,9 @@ public class DeviceScanner extends Thread {
                      e.printStackTrace();
                   }
                   
+                  if (default_path.equals("")) {
+                      slash = ""; // per il path_device
+                  }
                   // path da togliere nel log e nel xml dal nome del file. in modo che sia un path relativo.
                   String device_path = new_device.getAbsolutePath() + slash;
                   System.out.println(new_device.getAbsolutePath());
@@ -230,7 +235,7 @@ public class DeviceScanner extends Thread {
             
             System.out.println("Rimosso device"); //togliere
             
-            if (default_path == "") { // WINDOWS
+            if (default_path.equals("")) { // WINDOWS
                devices = Arrays.asList(File.listRoots());
                num_devices = devices.size();
             }
