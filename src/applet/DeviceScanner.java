@@ -1,5 +1,6 @@
 package applet;
 
+import java.applet.AppletContext;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -8,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,13 +29,20 @@ public class DeviceScanner extends Thread {
    private String default_path = "";
    private List<File> devices = null;
    private int num_devices = 0;
+   AppletContext app_context;
    
    private boolean isActive;
    private String user;
    
-   DeviceScanner(String user) {
-	   
-	  System.out.println(System.getProperty("os.name"));
+   DeviceScanner(String user, AppletContext app_context) {
+       
+      this.app_context = app_context;
+      
+	  try {
+	      app_context.showDocument(
+                  new URL("javascript:status(\""+System.getProperty("os.name")+"\")"));
+      } catch (Exception e) {
+      }
       
       this.user = user;
       
@@ -66,21 +75,43 @@ public class DeviceScanner extends Thread {
 	   return path.replaceAll("\\\\","/");
    }
    
-   private void scanMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path) {
+   private int scanMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path, int actual, int total) {
       
       File[] files = fs.getFiles(folder, false);
       FileNameExtensionFilter audioFilter = new FileNameExtensionFilter("Audio", "mp3");
 
       for (File f: files) {
          if (f.isDirectory())
-            scanMedia(f,log,xml,old_mp3,dev_path);
+            actual = scanMedia(f,log,xml,old_mp3,dev_path,actual,total);
          else if (audioFilter.accept(f) && !old_mp3.contains(pathUnix(relativePath(f.getAbsolutePath(), dev_path)))) {
             xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path));
-            System.out.println(relativePath(f.getAbsolutePath(), dev_path));
             log.println(pathUnix(relativePath(f.getAbsolutePath(), dev_path)));
+            actual++;
+            try {
+                app_context.showDocument(
+                        new URL("javascript:scanStatus("+actual+","+total+")"));
+            } catch (Exception e) {
+            }
          }
       }
+      return actual;
    }
+   
+   private int countMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path,int total) {
+       
+       File[] files = fs.getFiles(folder, false);
+       FileNameExtensionFilter audioFilter = new FileNameExtensionFilter("Audio", "mp3");
+
+       for (File f: files) {
+          if (f.isDirectory())
+             total = countMedia(f,log,xml,old_mp3,dev_path,total);
+          else if (audioFilter.accept(f) && !old_mp3.contains(pathUnix(relativePath(f.getAbsolutePath(), dev_path)))) {
+             total++;
+          }
+       }
+       return total;
+    }
+   
    
    // crea una lista con tutti i nomi di file presenti nel log, quindi gia' scansionati
    private List<String> readLog(File log) {
@@ -170,6 +201,11 @@ public class DeviceScanner extends Thread {
             for (File f : devices_temp) {
                if(!devices_name.contains(f.getAbsolutePath())) {
                   new_devices.add(f);
+                  try {
+                      app_context.showDocument(
+                              new URL("javascript:status(\"Scansione: "+f.getAbsolutePath()+"\")"));
+                  } catch (Exception e) {
+                  }
                }
             }
             
@@ -187,8 +223,6 @@ public class DeviceScanner extends Thread {
                   String slash = System.getProperty("file.separator");
                   //if (default_path != "") slash = "/";
                   String log_path = new_device.getAbsolutePath() + slash + user +".netmus.log";
-                  
-                  System.out.println(log_path);  // RIMUOVERE
                   
                   File log = new File(log_path);
                   List<String> old_mp3 = readLog(log);
@@ -208,19 +242,20 @@ public class DeviceScanner extends Thread {
                   }
                   // path da togliere nel log e nel xml dal nome del file. in modo che sia un path relativo.
                   String device_path = new_device.getAbsolutePath() + slash;
-                  System.out.println(new_device.getAbsolutePath());
                   
-                  scanMedia(new_device,file,xml,old_mp3,device_path); // scansione new_device
-                  file.close();
+                  int total_file = countMedia(new_device,file,xml,old_mp3,device_path,0);
                   
-                  String xml_string = xml.toString(); // da inviare a GWT -> DTO -> server
+                  scanMedia(new_device,file,xml,old_mp3,device_path,0,total_file); // scansione new_device
                   
-                  System.out.println (xml_string);
+                  file.close(); // vedere
                   
-                  //stampo l'output sul file
-                  java.io.BufferedWriter t = new java.io.BufferedWriter(new FileWriter(new File(new_device.getAbsolutePath()+slash+"result.log"),true));
-                  t.write(xml_string);
-                  t.close();
+                  String xml_string = xml.toString();
+                  
+                  try {
+                      app_context.showDocument(
+                              new URL("javascript:scanStatus(\""+xml_string+"\")"));
+                  } catch (Exception e) {
+                  }
 
                } catch (IOException io) {}
             }
@@ -232,8 +267,12 @@ public class DeviceScanner extends Thread {
             
          }
          else if (num_devices_temp < num_devices) {
-            
-            System.out.println("Rimosso device"); //togliere
+             
+            try {
+                 app_context.showDocument(
+                         new URL("javascript:status(\"Rimosso device\")"));
+            } catch (Exception e) {
+            }
             
             if (default_path.equals("")) { // WINDOWS
                devices = Arrays.asList(File.listRoots());
