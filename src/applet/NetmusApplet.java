@@ -29,6 +29,11 @@ public class NetmusApplet extends JApplet {
 
        isActive = state;
        loggedUser = user;
+       try {
+           app_context.showDocument(
+                   new URL("javascript:showStatus(\"arrivato\")"));
+       } catch (Exception e) {
+       }
        scanner = new DeviceScanner(loggedUser, app_context);
        setState(isActive);
        scanner.start();
@@ -38,9 +43,7 @@ public class NetmusApplet extends JApplet {
    public void setState(boolean b) {
       isActive = b;
       scanner.setState(b);
-      
-      // da eliminare dopo
-      // solo per visualizzare lo stato graficamente
+
       if (isActive) {
          synchronized(scanner) {
             scanner.notify();
