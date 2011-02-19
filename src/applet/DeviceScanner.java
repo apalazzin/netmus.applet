@@ -86,6 +86,11 @@ public class DeviceScanner extends Thread {
 	   return path.replaceAll("\\\\","/");
    }
    
+   //prepare the string to been sent.
+   private String prepare(String s){
+	   return s.replaceAll("'", "\\\\'");
+   }
+   
    private int scanMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path, int actual, int total) {
       
       File[] files = fs.getFiles(folder, false);
@@ -95,7 +100,7 @@ public class DeviceScanner extends Thread {
          if (f.isDirectory())
             actual = scanMedia(f,log,xml,old_mp3,dev_path,actual,total);
          else if (audioFilter.accept(f) && !old_mp3.contains(pathUnix(relativePath(f.getAbsolutePath(), dev_path)))) {
-            xml.addMP3(getTag(f), relativePath(f.getAbsolutePath(), dev_path));
+            xml.addMP3(getTag(f), pathUnix(relativePath(f.getAbsolutePath(), dev_path)));
             log.println(pathUnix(relativePath(f.getAbsolutePath(), dev_path)));
             actual++;
             try {
@@ -307,9 +312,7 @@ public class DeviceScanner extends Thread {
  
                 try {
                     app_context.showDocument(
-                            new URL("javascript:scanResult('"+xml_string+"')"));
-//                    app_context.showDocument(
-//                            new URL("javascript:scanResult(\"prova\")"));
+                            new URL("javascript:scanResult('"+prepare(xml_string)+"')"));
                     app_context.showDocument(
                             new URL("javascript:showStatus(\"SENT\")"));
                     
