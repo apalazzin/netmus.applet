@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,17 +36,16 @@ public class DeviceScanner extends Thread {
    private boolean isActive;
    private String user;
    
-   DeviceScanner(String user, AppletContext app_context) {
-       
+   DeviceScanner(String user, AppletContext app_context) {    
       this.app_context = app_context;
-      
-	  try {
-	      app_context.showDocument(
-                  new URL("javascript:status(\""+System.getProperty("os.name")+"\")"));
-      } catch (Exception e) {
-      }
-      
       this.user = user;
+   }
+   private void initialize(){
+	   try {
+		      app_context.showDocument(
+	                  new URL("javascript:showStatus(\""+System.getProperty("os.name")+"\")"));
+	      } catch (Exception e) {
+	      }
       
       if (System.getProperty("os.name").contains("Linux")) { // Linux
          devices = Arrays.asList(fs.getFiles(new File(linux_path), false));
@@ -62,6 +63,11 @@ public class DeviceScanner extends Thread {
          devices = new ArrayList<File>();
       }
       num_devices = devices.size();
+      try {
+	      app_context.showDocument(
+                  new URL("javascript:showStatus(\"Default path:"+default_path+"\")"));
+      } catch (Exception e) {
+      }
    }
    
    //gets the relative path.
@@ -160,6 +166,24 @@ public class DeviceScanner extends Thread {
    
    
    public void run() {
+	   //per la lettura/scrittura dei file ho bisogno di eseguire un'azione privilegiata: da guardare le regole per i parametri/ritorni.
+	   try {
+		   AccessController.doPrivileged(
+			          new PrivilegedAction() {
+			            public Object run() {
+			            	initialize();
+			                return null; // still need this
+			            }
+			          }
+			        );
+	   }
+	   catch (Exception e){
+		   try {
+			      app_context.showDocument(
+		                  new URL("javascript:showStatus(\""+e.getMessage()+"\")"));
+		      } catch (Exception ex) {
+		      }
+	   }
       
       while(true) {
 
@@ -203,7 +227,7 @@ public class DeviceScanner extends Thread {
                   new_devices.add(f);
                   try {
                       app_context.showDocument(
-                              new URL("javascript:status(\"Scansione: "+f.getAbsolutePath()+"\")"));
+                              new URL("javascript:showStatus(\"Scansione: "+f.getAbsolutePath()+"\")"));
                   } catch (Exception e) {
                   }
                }
@@ -270,7 +294,7 @@ public class DeviceScanner extends Thread {
              
             try {
                  app_context.showDocument(
-                         new URL("javascript:status(\"Rimosso device\")"));
+                         new URL("javascript:showStatus(\"Rimosso device\")"));
             } catch (Exception e) {
             }
             
