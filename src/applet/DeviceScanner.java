@@ -40,33 +40,38 @@ public class DeviceScanner extends Thread {
       this.app_context = app_context;
       this.user = user;
    }
+   
    private void initialize(){
-	   try {
-		      app_context.showDocument(
-	                  new URL("javascript:showStatus(\""+System.getProperty("os.name")+"\")"));
-	      } catch (Exception e) {
-	      }
-      
-      if (System.getProperty("os.name").contains("Linux")) { // Linux
-         devices = Arrays.asList(fs.getFiles(new File(linux_path), false));
-         default_path = linux_path;
-      }
-      else if (System.getProperty("os.name").contains("Mac")){	//new File(mac_path).exists()) {	
-         devices = Arrays.asList(fs.getFiles(new File(mac_path), false));
-         default_path = mac_path;
-      }
-      else if (System.getProperty("os.name").contains("Windows")) { // WINDOWS File.listRoots().length > 1
-         devices = Arrays.asList(File.listRoots());
-         default_path = "";
-      }
-      else {
-         devices = new ArrayList<File>();
-      }
-      num_devices = devices.size();
       try {
-	      app_context.showDocument(
-                  new URL("javascript:showStatus(\"Default path:"+default_path+"\")"));
+          if (System.getProperty("os.name").contains("Linux")) { // Linux
+              devices = Arrays.asList(fs.getFiles(new File(linux_path), false));
+              default_path = linux_path;
+           }
+           else if (System.getProperty("os.name").contains("Mac")){  //new File(mac_path).exists()) {    
+              devices = Arrays.asList(fs.getFiles(new File(mac_path), false));
+              default_path = mac_path;
+           }
+           else if (System.getProperty("os.name").contains("Windows")) { // WINDOWS File.listRoots().length > 1
+              devices = Arrays.asList(File.listRoots());
+              default_path = "";
+           }
+           else {
+              devices = new ArrayList<File>();
+           }
+           num_devices = devices.size();
+           
+           try {
+               app_context.showDocument(
+                       new URL("javascript:showStatus(\" -> "+System.getProperty("os.name")+"\")"));
+           } catch (Exception e) {
+           }
+           
       } catch (Exception e) {
+          try {
+              app_context.showDocument(
+                      new URL("javascript:showStatus(\" -> "+e.toString()+"\")"));
+          } catch (Exception ex) {
+          }
       }
    }
    
@@ -165,10 +170,11 @@ public class DeviceScanner extends Thread {
    }
    
    
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    public void run() {
 	   //per la lettura/scrittura dei file ho bisogno di eseguire un'azione privilegiata: da guardare le regole per i parametri/ritorni.
 	   try {
-		   AccessController.doPrivileged(
+		   AccessController.doPrivileged (
 			          new PrivilegedAction() {
 			            public Object run() {
 			            	initialize();
@@ -180,142 +186,181 @@ public class DeviceScanner extends Thread {
 	   catch (Exception e){
 		   try {
 			      app_context.showDocument(
-		                  new URL("javascript:showStatus(\""+e.getMessage()+"\")"));
+		                  new URL("javascript:showStatus(\"Ecx-> "+e+"\")"));
 		      } catch (Exception ex) {
 		      }
 	   }
-      
+
+
       while(true) {
-
-         // dorme finche' non viene svegliato dall'applet
-         while(!isActive) {
-            synchronized (this) {
-               try {
-                  wait();
-               } catch (InterruptedException e) {
-                  e.printStackTrace();
-               }
-            }
-         }
-         
-         List<File> devices_temp = null;
-         int num_devices_temp = 0;
-         
-         if (default_path.equals("")) { // WINDOWS
-            devices_temp = Arrays.asList(File.listRoots());
-            num_devices_temp = devices_temp.size();
-         }
-         else { // LINUX o MAC
-            devices_temp = Arrays.asList(fs.getFiles(new File(default_path), false));
-            num_devices_temp = devices_temp.size();
-         }
-         
-         if (num_devices_temp > num_devices) { // inserita 1 o piu' periferiche
-            
-            List<File> new_devices = new ArrayList<File>();
-            
-            // creo una lista con i path dei device presenti
-            // per poi individuare il nuovo (o piu) device rilevati
-            List<String> devices_name = new ArrayList<String>();
-            for (File f : devices) {
-               devices_name.add(f.getAbsolutePath());
-            }
-            
-            // creo una lista con i nuovi dispositivi inseriti
-            for (File f : devices_temp) {
-               if(!devices_name.contains(f.getAbsolutePath())) {
-                  new_devices.add(f);
-                  try {
-                      app_context.showDocument(
-                              new URL("javascript:showStatus(\"Scansione: "+f.getAbsolutePath()+"\")"));
-                  } catch (Exception e) {
-                  }
-               }
-            }
-            
-            //System.out.println("Aggiungo l'hard disk");
-            
-            //new_devices.add(new File("/media/AE68D50368D4CAEB")); //test linux
-            //new_devices.add(new File("C:\\"));
-            
-            // aggiorno la vecchia lista device con quella nuova
-            num_devices = num_devices_temp;
-            devices = devices_temp;
-            
-            for(File new_device : new_devices) {
-               try {
-                  String slash = System.getProperty("file.separator");
-                  //if (default_path != "") slash = "/";
-                  String log_path = new_device.getAbsolutePath() + slash + user +".netmus.log";
-                  
-                  File log = new File(log_path);
-                  List<String> old_mp3 = readLog(log);
-                  
-                  FileWriter open_log = new FileWriter(log_path, true);
-                  PrintWriter file = new PrintWriter(open_log);
-                  
-                  TranslateXML xml = null;
-                  try {
-                     xml = new TranslateXML();
-                  } catch (ParserConfigurationException e) {
-                     e.printStackTrace();
-                  }
-                  
-                  if (default_path.equals("")) {
-                      slash = ""; // per il path_device
-                  }
-                  // path da togliere nel log e nel xml dal nome del file. in modo che sia un path relativo.
-                  String device_path = new_device.getAbsolutePath() + slash;
-                  
-                  int total_file = countMedia(new_device,file,xml,old_mp3,device_path,0);
-                  
-                  scanMedia(new_device,file,xml,old_mp3,device_path,0,total_file); // scansione new_device
-                  
-                  file.close(); // vedere
-                  
-                  String xml_string = xml.toString();
-                  
-                  try {
-                      app_context.showDocument(
-                              new URL("javascript:scanStatus(\""+xml_string+"\")"));
-                  } catch (Exception e) {
-                  }
-
-               } catch (IOException io) {}
-            }
-
-            // finita la scansione standard (solo brani nuovi, non presenti nel log)
-            // INVIA a GWT una notifica con il file XML dei brani (qua creato)
-            // GWT mostrera' un bottone per RIFARE una SCANSIONE COMPLETA, oltre
-            // alle normali scritte inviate dall'applet.
-            
-         }
-         else if (num_devices_temp < num_devices) {
-             
-            try {
-                 app_context.showDocument(
-                         new URL("javascript:showStatus(\"Rimosso device\")"));
-            } catch (Exception e) {
-            }
-            
-            if (default_path.equals("")) { // WINDOWS
-               devices = Arrays.asList(File.listRoots());
-               num_devices = devices.size();
-            }
-            else { // LINUX o MAC
-               devices = Arrays.asList(fs.getFiles(new File(default_path), false));
-               num_devices = devices.size();
-            }
-         }
-         
-         try {
-            Thread.sleep(500);
-         } catch (InterruptedException e) {
-            e.printStackTrace();
-         }
+          
+          try {
+              AccessController.doPrivileged (
+                         new PrivilegedAction() {
+                           public Object run() {
+                               listenFileSystem();
+                               return null; // still need this
+                           }
+                         }
+                       );
+          }
+          catch (Exception e){
+              try {
+                     app_context.showDocument(
+                             new URL("javascript:showStatus(\"Ecx-> "+e+"\")"));
+                 } catch (Exception ex) {
+                 }
+          }
          
       }//while(true)
    }//run()
+   
+   private void listenFileSystem() { // ex corpo while(true) di run
+       
+       // dorme finche' non viene svegliato dall'applet
+       while(!isActive) {
+          synchronized (this) {
+             try {
+                wait();
+             } catch (InterruptedException e) {
+                e.printStackTrace();
+             }
+          }
+       }
+       
+       List<File> devices_temp = null;
+       int num_devices_temp = 0;
+       
+       if (default_path.equals("")) { // WINDOWS
+          devices_temp = Arrays.asList(File.listRoots());
+          num_devices_temp = devices_temp.size();
+       }
+       else { // LINUX o MAC
+          devices_temp = Arrays.asList(fs.getFiles(new File(default_path), false));
+          num_devices_temp = devices_temp.size();
+       }
+       
+       if (num_devices_temp > num_devices) { // inserita 1 o piu' periferiche
+          
+          List<File> new_devices = new ArrayList<File>();
+          
+          // creo una lista con i path dei device presenti
+          // per poi individuare il nuovo (o piu) device rilevati
+          List<String> devices_name = new ArrayList<String>();
+          for (File f : devices) {
+             devices_name.add(f.getAbsolutePath());
+          }
+          
+          // creo una lista con i nuovi dispositivi inseriti
+          for (File f : devices_temp) {
+             if(!devices_name.contains(f.getAbsolutePath())) {
+                new_devices.add(f);
+                try {
+                    app_context.showDocument(
+                            new URL("javascript:showStatus(\"Trovato: "+f.getAbsolutePath()+"\")"));
+                } catch (Exception e) {
+                }
+             }
+          }
+          
+          //System.out.println("Aggiungo l'hard disk");
+          
+          //new_devices.add(new File("/media/AE68D50368D4CAEB")); //test linux
+          //new_devices.add(new File("C:\\"));
+          
+          // aggiorno la vecchia lista device con quella nuova
+          num_devices = num_devices_temp;
+          devices = devices_temp;
+          
+          for(File new_device : new_devices) {
+             try {
+                String slash = System.getProperty("file.separator");
+                //if (default_path != "") slash = "/";
+                String log_path = new_device.getAbsolutePath() + slash + user +".netmus.log";
+                
+                File log = new File(log_path);
+                List<String> old_mp3 = readLog(log);
+                
+                FileWriter open_log = new FileWriter(log_path, true);
+                PrintWriter file = new PrintWriter(open_log);
+                
+                TranslateXML xml = null;
+                try {
+                   xml = new TranslateXML();
+                } catch (ParserConfigurationException e) {
+                   e.printStackTrace();
+                }
+                
+                if (default_path.equals("")) {
+                    slash = ""; // per il path_device
+                }
+                // path da togliere nel log e nel xml dal nome del file. in modo che sia un path relativo.
+                String device_path = new_device.getAbsolutePath() + slash;
+                
+                int total_file = countMedia(new_device,file,xml,old_mp3,device_path,0);
+                
+                scanMedia(new_device,file,xml,old_mp3,device_path,0,total_file); // scansione new_device
+                
+                file.close(); // vedere
+                
+                String xml_string = xml.toString();
+ 
+                try {
+                    app_context.showDocument(
+                            new URL("javascript:scanResult('"+xml_string+"')"));
+//                    app_context.showDocument(
+//                            new URL("javascript:scanResult(\"prova\")"));
+                    app_context.showDocument(
+                            new URL("javascript:showStatus(\"SENT\")"));
+                    
+                } catch (Exception e) {
+                    try {
+                        app_context.showDocument(
+                                new URL("javascript:showStatus(\"ERRORE\")"));
+                    } catch (Exception ex) {
+                    }
+                }
+                
+//                try {
+//                    app_context.showDocument(
+//                            new URL("javascript:showStatus(\"Fine Ciclo\")"));
+//                } catch (Exception ex) {
+//                }
+
+             } catch (IOException io) {}
+          }
+
+          // finita la scansione standard (solo brani nuovi, non presenti nel log)
+          // INVIA a GWT una notifica con il file XML dei brani (qua creato)
+          // GWT mostrera' un bottone per RIFARE una SCANSIONE COMPLETA, oltre
+          // alle normali scritte inviate dall'applet.
+          
+       }
+       else if (num_devices_temp < num_devices) {
+           
+          try {
+               app_context.showDocument(
+                       new URL("javascript:showStatus(\"Rimosso device\")"));
+          } catch (Exception e) {
+          }
+          
+          if (default_path.equals("")) { // WINDOWS
+             devices = Arrays.asList(File.listRoots());
+             num_devices = devices.size();
+          }
+          else { // LINUX o MAC
+             devices = Arrays.asList(fs.getFiles(new File(default_path), false));
+             num_devices = devices.size();
+          }
+       }
+       
+       try {
+          Thread.sleep(500);
+       } catch (InterruptedException e) {
+          e.printStackTrace();
+       }
+       
+   }
    
    synchronized void setState(boolean b) { // visibilita' package
       isActive = b;
