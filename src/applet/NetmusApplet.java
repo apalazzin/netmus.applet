@@ -17,7 +17,7 @@ public class NetmusApplet extends JApplet {
    public void start() {
        
        app_context = getAppletContext();
-
+       
        try {
            app_context.showDocument(
                    new URL("javascript:getStarts()"));
@@ -26,14 +26,15 @@ public class NetmusApplet extends JApplet {
    }
    
    public void letsGO(String user, boolean state) {
-
-       isActive = state;
-       loggedUser = user;
        try {
            app_context.showDocument(
-                   new URL("javascript:showStatus(\"arrivato\")"));
+                   new URL("javascript:showStatus(\"LetsGO\")"));
        } catch (Exception e) {
        }
+       
+       isActive = state;
+       loggedUser = user;
+
        scanner = new DeviceScanner(loggedUser, app_context);
        setState(isActive);
        scanner.start();
