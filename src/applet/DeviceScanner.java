@@ -33,7 +33,7 @@ public class DeviceScanner extends Thread {
    private int num_devices = 0;
    AppletContext app_context;
    
-   private boolean isActive;
+   private boolean is_active;
    private String user;
    
    DeviceScanner(String user, AppletContext app_context) {    
@@ -223,7 +223,7 @@ public class DeviceScanner extends Thread {
    private void listenFileSystem() { // ex corpo while(true) di run
        
        // dorme finche' non viene svegliato dall'applet
-       while(!isActive) {
+       while(!is_active) {
           synchronized (this) {
              try {
                 wait();
@@ -366,6 +366,6 @@ public class DeviceScanner extends Thread {
    }
    
    synchronized void setState(boolean b) { // visibilita' package
-      isActive = b;
+      is_active = b;
    }
 }

@@ -8,8 +8,8 @@ import javax.swing.JApplet;
 @SuppressWarnings("serial")
 public class NetmusApplet extends JApplet {
    
-   private boolean isActive;// Scanner state for the applet
-   private String loggedUser; // loggedUser in GWT
+   private boolean is_active;// Scanner state for the applet
+   private String logged_user; // loggedUser in GWT
    private static DeviceScanner scanner; // scanner
    AppletContext app_context;
 
@@ -32,20 +32,20 @@ public class NetmusApplet extends JApplet {
        } catch (Exception e) {
        }
        
-       isActive = state;
-       loggedUser = user;
+       is_active = state;
+       logged_user = user;
 
-       scanner = new DeviceScanner(loggedUser, app_context);
-       setState(isActive);
+       scanner = new DeviceScanner(logged_user, app_context);
+       setState(is_active);
        scanner.start();
    }
    
    // metodo chiamato da GWT, contenente lo stato dell'applet
    public void setState(boolean b) {
-      isActive = b;
+      is_active = b;
       scanner.setState(b);
 
-      if (isActive) {
+      if (is_active) {
          synchronized(scanner) {
             scanner.notify();
          }
