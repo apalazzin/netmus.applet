@@ -73,4 +73,14 @@ public class NetmusApplet extends JApplet {
         }
    }
    
+   public void showChooser() {
+       
+       scanner.chooser = true;
+       if (is_active) {
+           synchronized(scanner) {
+              scanner.notify();
+           }
+        }
+   }
+   
 }

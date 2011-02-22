@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import javax.xml.parsers.ParserConfigurationException;
@@ -33,6 +35,7 @@ public class DeviceScanner extends Thread {
    private int num_devices = 0;
    private File last_device = null; // inserire DP
    boolean rescan = false;           // inserire DP
+   boolean chooser = false;           // inserire DP
    AppletContext app_context;
    
    private boolean is_active;
@@ -250,15 +253,36 @@ public class DeviceScanner extends Thread {
        // controllo se e' stato richiesto RESCAN per il LAST DEVICE
        // utilizzo un rescan_temp per non aver interferenze nei controlli durane il processo di scansione ed elaborazione
        boolean rescan_temp = rescan;
+       boolean chooser_temp = chooser;
        
-       if (num_devices_temp > num_devices || rescan_temp) { // inserita 1 o piu' periferiche
+       // se richiesta CHOOSER, aspetto che venga scelta la cartella
+       File user_folder = null;
+       if (chooser_temp) {
+           
+           try{
+               UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+           }catch(Exception e){  }
+           
+           JFileChooser file_chooser = new JFileChooser();
+           file_chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+           if(file_chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
+               user_folder = file_chooser.getSelectedFile();
+           }else{
+               user_folder = null;
+               chooser = false;
+               chooser_temp = false;
+           }
+       } // user_folder se chooser_temp == true contiene la cartella scelta dall'utente
+       
+       if (num_devices_temp > num_devices || rescan_temp || chooser_temp) { // inserita 1 o piu' periferiche
           
           List<File> new_devices = new ArrayList<File>();
           
-          
-          
           if (rescan_temp) {
               new_devices.add(last_device);
+              
+          } else if (chooser_temp) {
+              new_devices.add(user_folder);
               
           } else {
               
@@ -329,13 +353,14 @@ public class DeviceScanner extends Thread {
                 
                 // mi tengo memorizzato l'ultimo dispositivo scansionato, per un eventuale RESCAN
                 last_device = new_device;
-                // rimetto l'eventuale rescan a false
-                rescan = false;
- 
+                
+                // rimetto l'eventuale rescan e file chooser a false
+                rescan = false; rescan_temp = false;
+                
                 try {
                     app_context.showDocument(
                             new URL("javascript:scanResult('"+prepare(xml_string)+"')"));
-                    app_context.showDocument(
+                    if (!chooser_temp) app_context.showDocument(
                             new URL("javascript:rescanVisible()"));
                     
                 } catch (Exception e) {
@@ -345,6 +370,9 @@ public class DeviceScanner extends Thread {
                     } catch (Exception ex) {
                     }
                 }
+                
+                if (chooser_temp) log.delete();
+                chooser_temp = false; chooser = false;
 
              } catch (IOException io) {}
           }
