@@ -50,6 +50,27 @@ public class NetmusApplet extends JApplet {
             scanner.notify();
          }
       }
+      
+      String s = "APPLET OFF";
+      if (is_active) {
+          s = "APPLET ON";
+      }
+      try {
+          app_context.showDocument(
+                  new URL("javascript:showStatus(\""+s+"\")"));
+      } catch (Exception e) {
+      }
+      
+   }
+   
+   public void rescanAll() {
+       
+       scanner.rescan = true;
+       if (is_active) {
+           synchronized(scanner) {
+              scanner.notify();
+           }
+        }
    }
    
 }

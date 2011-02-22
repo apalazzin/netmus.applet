@@ -31,6 +31,8 @@ public class DeviceScanner extends Thread {
    private String default_path = "";
    private List<File> devices = null;
    private int num_devices = 0;
+   private File last_device = null; // inserire DP
+   boolean rescan = false;           // inserire DP
    AppletContext app_context;
    
    private boolean is_active;
@@ -245,48 +247,63 @@ public class DeviceScanner extends Thread {
           num_devices_temp = devices_temp.size();
        }
        
-       if (num_devices_temp > num_devices) { // inserita 1 o piu' periferiche
+       // controllo se e' stato richiesto RESCAN per il LAST DEVICE
+       // utilizzo un rescan_temp per non aver interferenze nei controlli durane il processo di scansione ed elaborazione
+       boolean rescan_temp = rescan;
+       
+       if (num_devices_temp > num_devices || rescan_temp) { // inserita 1 o piu' periferiche
           
           List<File> new_devices = new ArrayList<File>();
           
-          // creo una lista con i path dei device presenti
-          // per poi individuare il nuovo (o piu) device rilevati
-          List<String> devices_name = new ArrayList<String>();
-          for (File f : devices) {
-             devices_name.add(f.getAbsolutePath());
+          
+          
+          if (rescan_temp) {
+              new_devices.add(last_device);
+              
+          } else {
+              
+              // creo una lista con i path dei device presenti
+              // per poi individuare il nuovo (o piu) device rilevati
+              List<String> devices_name = new ArrayList<String>();
+              for (File f : devices) {
+                 devices_name.add(f.getAbsolutePath());
+              }
+              
+              // individuo i nuovi dispositivi inseriti
+              for (File f : devices_temp) {
+                 if(!devices_name.contains(f.getAbsolutePath())) {
+                    new_devices.add(f);
+                    try {
+                        app_context.showDocument(
+                                new URL("javascript:showStatus(\"Trovato: "+f.getAbsolutePath()+"\")"));
+                    } catch (Exception e) {
+                    }
+                 }
+              }
+              
+              // aggiorno la vecchia lista device con quella nuova
+              num_devices = num_devices_temp;
+              devices = devices_temp;
           }
           
-          // creo una lista con i nuovi dispositivi inseriti
-          for (File f : devices_temp) {
-             if(!devices_name.contains(f.getAbsolutePath())) {
-                new_devices.add(f);
-                try {
-                    app_context.showDocument(
-                            new URL("javascript:showStatus(\"Trovato: "+f.getAbsolutePath()+"\")"));
-                } catch (Exception e) {
-                }
-             }
-          }
-          
-          //System.out.println("Aggiungo l'hard disk");
-          
-          //new_devices.add(new File("/media/AE68D50368D4CAEB")); //test linux
-          //new_devices.add(new File("C:\\"));
-          
-          // aggiorno la vecchia lista device con quella nuova
-          num_devices = num_devices_temp;
-          devices = devices_temp;
-          
+
+          // scansiono il nuovo device ed invio i dati all'applicazione (anche piu' di uno sequenzialmente)
           for(File new_device : new_devices) {
              try {
+                
                 String slash = System.getProperty("file.separator");
                 //if (default_path != "") slash = "/";
                 String log_path = new_device.getAbsolutePath() + slash + user +".netmus.log";
                 
+                if (rescan_temp) {
+                    File log = new File(log_path);
+                    log.delete();
+                }
                 File log = new File(log_path);
                 List<String> old_mp3 = readLog(log);
                 
                 FileWriter open_log = new FileWriter(log_path, true);
+                
                 PrintWriter file = new PrintWriter(open_log);
                 
                 TranslateXML xml = null;
@@ -309,12 +326,17 @@ public class DeviceScanner extends Thread {
                 file.close(); // vedere
                 
                 String xml_string = xml.toString();
+                
+                // mi tengo memorizzato l'ultimo dispositivo scansionato, per un eventuale RESCAN
+                last_device = new_device;
+                // rimetto l'eventuale rescan a false
+                rescan = false;
  
                 try {
                     app_context.showDocument(
                             new URL("javascript:scanResult('"+prepare(xml_string)+"')"));
                     app_context.showDocument(
-                            new URL("javascript:showStatus(\"SENT\")"));
+                            new URL("javascript:rescanVisible()"));
                     
                 } catch (Exception e) {
                     try {
@@ -323,20 +345,9 @@ public class DeviceScanner extends Thread {
                     } catch (Exception ex) {
                     }
                 }
-                
-//                try {
-//                    app_context.showDocument(
-//                            new URL("javascript:showStatus(\"Fine Ciclo\")"));
-//                } catch (Exception ex) {
-//                }
 
              } catch (IOException io) {}
           }
-
-          // finita la scansione standard (solo brani nuovi, non presenti nel log)
-          // INVIA a GWT una notifica con il file XML dei brani (qua creato)
-          // GWT mostrera' un bottone per RIFARE una SCANSIONE COMPLETA, oltre
-          // alle normali scritte inviate dall'applet.
           
        }
        else if (num_devices_temp < num_devices) {
@@ -344,6 +355,8 @@ public class DeviceScanner extends Thread {
           try {
                app_context.showDocument(
                        new URL("javascript:showStatus(\"Rimosso device\")"));
+               app_context.showDocument(
+                       new URL("javascript:rescanNotVisible()"));
           } catch (Exception e) {
           }
           
