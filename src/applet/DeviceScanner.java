@@ -228,7 +228,7 @@ public class DeviceScanner extends Thread {
    private void listenFileSystem() { // ex corpo while(true) di run
        
        // dorme finche' non viene svegliato dall'applet
-       while(!is_active) {
+       while(!is_active && !chooser) {
           synchronized (this) {
              try {
                 wait();
@@ -258,7 +258,6 @@ public class DeviceScanner extends Thread {
        // se richiesta CHOOSER, aspetto che venga scelta la cartella
        File user_folder = null;
        if (chooser_temp) {
-           
            try{
                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
            }catch(Exception e){  }
