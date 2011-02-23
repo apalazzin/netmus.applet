@@ -1,3 +1,4 @@
+
 package applet;
 
 import java.io.StringWriter;
@@ -53,14 +54,10 @@ public class TranslateXML {
 	
 	private String clean(String stringa)
 	{
-		System.out.print(stringa);
 		String t = stringa.replaceAll("\t\b\n\r\f\0", "");
 		t = t.replaceAll("\\]\\]>&[\\S^;]{1,6};<!\\[CDATA\\[", "");
 		t = t.replaceAll("&[\\S^;]{1,6};","");
-		System.out.println(" - "+t);
-		
 		return t;
-		//return stringa;
 	}
 	
 	public void addMP3(AbstractMP3Tag brano, String file){
@@ -84,7 +81,6 @@ public class TranslateXML {
 					song.appendChild(albumTitle);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 			
 			try {
@@ -96,7 +92,6 @@ public class TranslateXML {
 					song.appendChild(authorComposer);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 			
 			try {
@@ -108,7 +103,6 @@ public class TranslateXML {
 					song.appendChild(leadArtist);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 			
 			try {
@@ -120,7 +114,6 @@ public class TranslateXML {
 					song.appendChild(songGenre);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 			
 			try {
@@ -132,7 +125,6 @@ public class TranslateXML {
 					song.appendChild(songTitle);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 			
 			try {
@@ -144,7 +136,6 @@ public class TranslateXML {
 					song.appendChild(trackNumber);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 			
 			try {
@@ -156,7 +147,6 @@ public class TranslateXML {
 					song.appendChild(year);
 				}
 			} catch (UnsupportedOperationException e){
-				System.err.println("Operazione non supportata.");
 			}
 		}
 			
@@ -182,7 +172,7 @@ public class TranslateXML {
 		return null;
 	}
 	
-	public String getGenreCode(String StringCode){
+	private String getGenreCode(String StringCode){
 		System.out.println(StringCode);
 		if(StringCode.matches("^[\\D]+$")) return StringCode;//the genre is already specified in a non-code format in the mp3 tag
 		else{
@@ -344,8 +334,6 @@ public class TranslateXML {
 				   }
 				   return genre;
 			}
-		
-	   
 	}
 
 }
