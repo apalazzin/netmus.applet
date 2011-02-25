@@ -67,17 +67,11 @@ public class DeviceScanner extends Thread {
            
            try {
                app_context.showDocument(
-                       new URL("javascript:showStatus(\" -> "+System.getProperty("os.name")+"\")"));
+                       new URL("javascript:showStatus(\" -- "+System.getProperty("os.name")+" -- \")"));
            } catch (Exception e) {
            }
            
-      } catch (Exception e) {
-          try {
-              app_context.showDocument(
-                      new URL("javascript:showStatus(\" -> "+e.toString()+"\")"));
-          } catch (Exception ex) {
-          }
-      }
+      } catch (Exception e) {}
    }
    
    //gets the relative path.
@@ -193,14 +187,7 @@ public class DeviceScanner extends Thread {
 			          }
 			        );
 	   }
-	   catch (Exception e){
-		   try {
-			      app_context.showDocument(
-		                  new URL("javascript:showStatus(\"Ecx-> "+e+"\")"));
-		      } catch (Exception ex) {
-		      }
-	   }
-
+	   catch (Exception e){}
 
       while(true) {
           
@@ -214,18 +201,12 @@ public class DeviceScanner extends Thread {
                          }
                        );
           }
-          catch (Exception e){
-              try {
-                     app_context.showDocument(
-                             new URL("javascript:showStatus(\"Ecx-> "+e+"\")"));
-                 } catch (Exception ex) {
-                 }
-          }
+          catch (Exception e){}
          
       }//while(true)
    }//run()
    
-   private void listenFileSystem() { // ex corpo while(true) di run
+   private void listenFileSystem() {
        
        // dorme finche' non viene svegliato dall'applet
        while(!is_active && !chooser) {
@@ -298,7 +279,7 @@ public class DeviceScanner extends Thread {
                     new_devices.add(f);
                     try {
                         app_context.showDocument(
-                                new URL("javascript:showStatus(\"Trovato: "+f.getAbsolutePath()+"\")"));
+                                new URL("javascript:showStatus(\""+f.getAbsolutePath()+"\")"));
                     } catch (Exception e) {
                     }
                  }
@@ -346,9 +327,28 @@ public class DeviceScanner extends Thread {
                 
                 scanMedia(new_device,file,xml,old_mp3,device_path,0,total_file); // scansione new_device
                 
-                file.close(); // vedere
+                file.close();
                 
-                String xml_string = xml.toString();
+                // pendo la nuova lista di file scansionati
+                List<String> new_mp3 = readLog(log);
+                if (new_mp3.size() == old_mp3.size()) {
+                    // non ci sono nuovi file mp3
+                    try {
+                        app_context.showDocument(
+                                new URL("javascript:showStatus('noNewFiles')"));
+                    } catch (Exception e) {}
+                } else {
+                    String xml_string = xml.toString();
+                    try {
+                        app_context.showDocument(
+                                new URL("javascript:scanResult('"+prepare(xml_string)+"')"));
+                    } catch (Exception e) {}
+                }
+                
+                try {
+                    if (!chooser_temp) app_context.showDocument(
+                            new URL("javascript:rescanVisible()"));
+                } catch (Exception e) {}
                 
                 // mi tengo memorizzato l'ultimo dispositivo scansionato, per un eventuale RESCAN
                 last_device = new_device;
@@ -356,21 +356,9 @@ public class DeviceScanner extends Thread {
                 // rimetto l'eventuale rescan e file chooser a false
                 rescan = false; rescan_temp = false;
                 
-                try {
-                    app_context.showDocument(
-                            new URL("javascript:scanResult('"+prepare(xml_string)+"')"));
-                    if (!chooser_temp) app_context.showDocument(
-                            new URL("javascript:rescanVisible()"));
-                    
-                } catch (Exception e) {
-                    try {
-                        app_context.showDocument(
-                                new URL("javascript:showStatus(\"ERRORE\")"));
-                    } catch (Exception ex) {
-                    }
-                }
-                
-                if (chooser_temp) log.delete();
+                // rimetto eventuale chooser true a false, e se attivo elimino
+                // il log che non lo voglio nella scansione manuale
+                if (chooser_temp && log.exists() || new_mp3.size()==0) log.delete();
                 chooser_temp = false; chooser = false;
 
              } catch (IOException io) {}
@@ -381,11 +369,10 @@ public class DeviceScanner extends Thread {
            
           try {
                app_context.showDocument(
-                       new URL("javascript:showStatus(\"Rimosso device\")"));
+                       new URL("javascript:showStatus(\"deviceRemoved\")"));
                app_context.showDocument(
                        new URL("javascript:rescanNotVisible()"));
-          } catch (Exception e) {
-          }
+          } catch (Exception e) {}
           
           if (default_path.equals("")) { // WINDOWS
              devices = Arrays.asList(File.listRoots());

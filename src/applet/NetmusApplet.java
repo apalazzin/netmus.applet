@@ -26,12 +26,6 @@ public class NetmusApplet extends JApplet {
    }
    
    public void letsGO(String user, boolean state) {
-       try {
-           app_context.showDocument(
-                   new URL("javascript:showStatus(\"LetsGO\")"));
-       } catch (Exception e) {
-       }
-       
        is_active = state;
        logged_user = user;
 
@@ -51,9 +45,9 @@ public class NetmusApplet extends JApplet {
          }
       }
       
-      String s = "APPLET OFF";
+      String s = "appletOFF";
       if (is_active) {
-          s = "APPLET ON";
+          s = "appletON";
       }
       try {
           app_context.showDocument(
