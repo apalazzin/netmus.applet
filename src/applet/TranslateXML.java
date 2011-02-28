@@ -20,6 +20,12 @@ import org.farng.mp3.AbstractMP3Tag;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Nome: TranslateXML.java
+ * Autore:  VT.G
+ * Licenza: GNU GPL v3
+ * Data Creazione: 19 Febbraio 2011
+*/
 public class TranslateXML {
 	
 	//node signatures
@@ -39,27 +45,39 @@ public class TranslateXML {
 	private Document document;
 	private Element root;
 	
-	
 	public TranslateXML() throws ParserConfigurationException {
 		//this operation can throw an instance of ParserConfigurationException: in fact, it will never been thrown in our program.
 		documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 		newMP3List();
 	}
 	
+	/**
+	 * Crea un nuovo elemento "lista di Mp3"
+	 */
 	public void newMP3List(){
 		document = documentBuilder.newDocument();
 		root = document.createElement(ROOT_NAME);
 		document.appendChild(root);
 	}
 	
-	private String clean(String stringa)
+	/**
+	 * Pulisce la stringa da caratteri o sequenze non ammesse
+	 * @param string stringa da pulire
+	 * @return la stringa pulita
+	 */
+	private String clean(String string)
 	{
-		String t = stringa.replaceAll("\t\b\n\r\f\0", "");
+		String t = string.replaceAll("\t\b\n\r\f\0", "");
 		t = t.replaceAll("\\]\\]>&[\\S^;]{1,6};<!\\[CDATA\\[", "");
 		t = t.replaceAll("&[\\S^;]{1,6};","");
 		return t;
 	}
 	
+	/**
+	 * Aggiunge un elemento mp3 alla lista degli mp3
+	 * @param brano Tag estratto dal file
+	 * @param file File Mp3
+	 */
 	public void addMP3(AbstractMP3Tag brano, String file){
 		//create the new song node
 		Element song = document.createElement(SONG_NAME);
@@ -154,6 +172,9 @@ public class TranslateXML {
 		root.appendChild(song);
 	}
 	
+	/**
+	 * Traduce in stringa il file xml
+	 */
 	public String toString(){
 		Source source = new DOMSource(document);
         StringWriter stringWriter = new StringWriter();
@@ -172,6 +193,11 @@ public class TranslateXML {
 		return null;
 	}
 	
+	/**
+	 * Traduce un nome di un genere nel codice scelto
+	 * @param StringCode Codice testuale
+	 * @return ritorna il codice del Genere
+	 */
 	private String getGenreCode(String StringCode){
 		System.out.println(StringCode);
 		if(StringCode.matches("^[\\D]+$")) return StringCode;//the genre is already specified in a non-code format in the mp3 tag

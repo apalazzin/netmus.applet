@@ -6,6 +6,12 @@ import java.net.URL;
 import javax.swing.JApplet;
 
 @SuppressWarnings("serial")
+/**
+ * Nome: NetmusApplet.java
+ * Autore:  VT.G
+ * Licenza: GNU GPL v3
+ * Data Creazione: 18 Febbraio 2011
+*/
 public class NetmusApplet extends JApplet {
    
    private boolean is_active;// Scanner state for the applet
@@ -14,6 +20,11 @@ public class NetmusApplet extends JApplet {
    AppletContext app_context;
 
    @Override
+   /**
+    * Metodo chiamato in automatico quando viene inizializzata l'applet.
+    * Memorizza il context dell'applet ed invia un segnale a GWT grazie a JSNI
+    * per farsi mandare stato e nome dell'utente loggato.
+    */
    public void start() {
        
        app_context = getAppletContext();
@@ -25,6 +36,12 @@ public class NetmusApplet extends JApplet {
        }
    }
    
+   /**
+    * Metodo chiamato da GWT dopo aver ricevuto il segnale di getStarts().
+    * Crea e fa partire il Thread Scanner passandogli l'utente loggato.
+    * @param user utente loggato
+    * @param state stato dell'applet
+    */
    public void letsGO(String user, boolean state) {
        is_active = state;
        logged_user = user;
@@ -34,10 +51,14 @@ public class NetmusApplet extends JApplet {
        scanner.start();
    }
    
-   // metodo chiamato da GWT, contenente lo stato dell'applet
-   public void setState(boolean b) {
-      is_active = b;
-      scanner.setState(b);
+   /**
+    * Cambia lo stato dentro il thread scanner, per metterlo a riposare o svegliarlo
+    * tramite un notify. Mostra lo stato sul display di applet.
+    * @param state Stato dell'applet scelto dall'utente
+    */
+   public void setState(boolean state) {
+      is_active = state;
+      scanner.setState(state);
 
       if (is_active) {
          synchronized(scanner) {
@@ -57,6 +78,9 @@ public class NetmusApplet extends JApplet {
       
    }
    
+   /**
+    * Fa fare una nuova scansione a scanner, dell'ultimo dispositivo inserito.
+    */
    public void rescanAll() {
        
        scanner.rescan = true;
@@ -67,6 +91,9 @@ public class NetmusApplet extends JApplet {
         }
    }
    
+   /**
+    * Fa mostrare a scanner la finestra di scelta di una cartella locale da scansionare.
+    */
    public void showChooser() {
        
        scanner.chooser = true;
