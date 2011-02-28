@@ -25,6 +25,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.farng.mp3.AbstractMP3Tag;
 import org.farng.mp3.MP3File;
 
+/**
+ * Nome: DeviceScanner.java
+ * Autore:  VT.G
+ * Licenza: GNU GPL v3
+ * Data Creazione: 18 Febbraio 2011
+*/
 public class DeviceScanner extends Thread {
    
    private final String linux_path = "/media";
@@ -46,6 +52,11 @@ public class DeviceScanner extends Thread {
       this.user = user;
    }
    
+   /**
+    * Individua il tipo di sistema operativo per poi comportarsi in maniera adeguata.
+    * Tiene memorizzata la lista di device rilevati all'apertura, per poi individuare l'inserimento
+    * di un nuovo dispositivo. Manda lo stato sul display della Barra Applet.
+    */
    private void initialize(){
       try {
           if (System.getProperty("os.name").contains("Linux")) { // Linux
@@ -74,22 +85,47 @@ public class DeviceScanner extends Thread {
       } catch (Exception e) {}
    }
    
-   //gets the relative path.
+   /**
+    * Crea il path relativo sapendo il path base del device
+    * @param path Path assoluto
+    * @param device_path Path del device
+    * @return il path relativo al device
+    */
    private String relativePath(String path, String device_path) {
       path = path.replace(device_path, "");
       return path;
    }
    
-   //format the path following the Unix model
+   /**
+    * Adatta al formato UNIX (slash /) il path, anche se in Windows.
+    * @param path un path 
+    * @return il path in formato UNIX
+    */
    private String pathUnix(String path){
 	   return path.replaceAll("\\\\","/");
    }
    
-   //prepare the string to been sent.
+   /**
+    * Adatta una stringa per rendere possibile l'invio a GWT
+    * @param s stringa da preparare per l'invio a GWT
+    * @return una stringa passabile a GWT senza problemi in forma di URL in javascript
+    */
    private String prepare(String s){
 	   return s.replaceAll("'", "\\\\'");
    }
    
+   /**
+    * Esegue la scansione di una cartella e di tutte le sue sottocartelle,
+    * alla ricerca di file MP3 da analizzare. Il metodo e' ricorsivo.
+    * @param folder Cartella da scansionare
+    * @param log File di log su cui scrivere la lista di file MP3 analizzati
+    * @param xml Oggetto TranslateXML su cui aggiungere elementi tag dei brani
+    * @param old_mp3 Lista di mp3 gia' analizzati poiche' presenti in un file di log vecchio
+    * @param dev_path Path del device su cui si sta scansionando (per creare path relativi)
+    * @param actual indice parziale di avanzamento della scansione MP3
+    * @param total totale di brani da scansionare
+    * @return numero parziale di file MP3 analizzati
+    */
    private int scanMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path, int actual, int total) {
       
       File[] files = fs.getFiles(folder, false);
@@ -112,6 +148,16 @@ public class DeviceScanner extends Thread {
       return actual;
    }
    
+   /**
+    * 
+    * @param folder Cartella su cui eseguire il conteggio di MP3 presenti
+    * @param log File di log su cui scrivere la lista di file MP3 analizzati
+    * @param xml Oggetto TranslateXML su cui aggiungere elementi tag dei brani
+    * @param old_mp3 Lista di mp3 gia' analizzati poiche' presenti in un file di log vecchio
+    * @param dev_path Path del device su cui si sta scansionando (per creare path relativi)
+    * @param total numero da incrementare fino ad arrivare al totale dei brani
+    * @return parziale del conteggio brani
+    */
    private int countMedia(File folder, PrintWriter log, TranslateXML xml, List<String> old_mp3, String dev_path,int total) {
        
        File[] files = fs.getFiles(folder, false);
@@ -127,8 +173,11 @@ public class DeviceScanner extends Thread {
        return total;
     }
    
-   
-   // crea una lista con tutti i nomi di file presenti nel log, quindi gia' scansionati
+   /**
+    * Crea una lista con tutti i nomi di file presenti nel log, quindi gia' scansionati
+    * @param log file di log
+    * @return lista di brani presenti nel log file
+    */
    private List<String> readLog(File log) {
       List<String> old_mp3 = new ArrayList<String>();
 
@@ -151,6 +200,11 @@ public class DeviceScanner extends Thread {
       return old_mp3;
    }
    
+   /**
+    * Estrae il tag dl file Mp3
+    * @param mp3_file File individuato come MP3
+    * @return Tag Mp3 polimorfo dal quale estrarre le varie informazioni
+    */
    private AbstractMP3Tag getTag(File mp3_file) {
       MP3File mp3 = null;
       AbstractMP3Tag tag = null;
@@ -173,7 +227,12 @@ public class DeviceScanner extends Thread {
       return tag;
    }
    
-   
+   /**
+    * Metodo ereditato da Thread che viene eseguito quando chiamato il metodo start().
+    * Vengono creati dei privilegi all'utente per accedere ai file del File System,
+    * poiche' non basta che l'applet sia firmata visto che vengono chiamati i metodi da 
+    * javascript con JSNI. Ci vogliono questi particolari privilegi.
+    */
    @SuppressWarnings({ "unchecked", "rawtypes" })
    public void run() {
 	   //per la lettura/scrittura dei file ho bisogno di eseguire un'azione privilegiata: da guardare le regole per i parametri/ritorni.
@@ -206,6 +265,12 @@ public class DeviceScanner extends Thread {
       }//while(true)
    }//run()
    
+   /**
+    * Metodo eseguito di continuo in run(), ad intervalli di mezzo secondo
+    * Individua una periferica di archiviazione di massa inserita e la scansiona estraendone 
+    * tutte le informazioni del tag mp3.
+    * Puo' essere effettuata la scansione anche manualmente (rescan, chooser)
+    */
    private void listenFileSystem() {
        
        // dorme finche' non viene svegliato dall'applet
@@ -392,6 +457,10 @@ public class DeviceScanner extends Thread {
        
    }
    
+   /**
+    * Setta lo stato del thread, per imporgli la sospensione se l'utente lo richiede.
+    * @param b stato che comanda il thread di scansione
+    */
    synchronized void setState(boolean b) { // visibilita' package
       is_active = b;
    }
