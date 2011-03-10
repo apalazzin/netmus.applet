@@ -182,7 +182,7 @@ public class TranslateXML {
         try {
 			Transformer t=TransformerFactory.newInstance().newTransformer();
 			t.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-15");
-			//t.setOutputProperty(OutputKeys.ENCODING,"UTF16");
+			t.setOutputProperty(OutputKeys.ENCODING,"UTF-16");
 			t.transform(source, result);
 			return clean(stringWriter.getBuffer().toString());
 		} catch (TransformerException e) {
