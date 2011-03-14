@@ -70,7 +70,7 @@ public class TranslateXML {
 		String t = string.replaceAll("\t\b\n\r\f\0", "");
 		t = t.replaceAll("\\]\\]>&[\\S^;]{1,6};<!\\[CDATA\\[", "");
 		t = t.replaceAll("&[\\S^;]{1,6};","");
-		t = t.replaceAll("ˇ|˛|‡|Ú|�", "");
+		t = t.replaceAll("ˇ|˛|‡|Ú|�|ÿþ", "");
 		return t;
 	}
 	
